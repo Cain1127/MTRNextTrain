@@ -1,0 +1,50 @@
+//
+//  StationFacilitiesLineCell.m
+//  bochk
+//
+//  Created by Jeff Cheung on 11年3月2日.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#import "SelectStationLineCell.h"
+
+
+@implementation SelectStationLineCell
+
+@synthesize value_label = _value_label;
+
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
+    if ((self = [super initWithStyle:style reuseIdentifier:reuseIdentifier])) {
+        // Initialization code
+		self.selectionStyle = UITableViewCellSelectionStyleNone;
+		_value_label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 145, 48)];
+        //_value_label.font = [UIFont boldSystemFontOfSize:13];
+        if ([[CoreData sharedCoreData].lang isEqualToString:@"en"])
+        {
+            _value_label.font = [UIFont boldSystemFontOfSize:14];
+        }
+        else
+        {
+            _value_label.font = [UIFont boldSystemFontOfSize:18];
+        }
+		_value_label.backgroundColor = [UIColor clearColor];
+		_value_label.textAlignment = UITextAlignmentRight;
+		[self.contentView addSubview:_value_label];
+    }
+    return self;
+}
+
+-(void)reset{
+   _value_label.text = @""; 
+}
+
+- (void)dealloc {
+    if(_value_label != nil){
+        [_value_label removeFromSuperview];
+        [_value_label release];
+        _value_label = nil;
+    }
+    [super dealloc];
+}
+
+@end

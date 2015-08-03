@@ -1,0 +1,49 @@
+//
+//  MapSearchViewController.h
+//  MTR Next Train
+//
+//  Created by Lam Bob on 9/1/13.
+//
+//
+
+#import <UIKit/UIKit.h>
+
+@protocol MapSearchViewControllerDelegate;
+
+@interface MapSearchViewController : UIViewController<UIScrollViewDelegate>
+{
+    IBOutlet UIButton *btn_view_system_map;
+    NSMutableArray *wrlStations;
+    IBOutlet UIImageView *bg;
+    IBOutlet UIButton *btn1,*btn2;
+}
+
+@property (nonatomic, assign) id <MapSearchViewControllerDelegate> delegate;
+@property (nonatomic, strong) IBOutlet UIScrollView *scroll_view;
+
+
+@property (nonatomic,retain)NSMutableArray *wrlStations;
+-(IBAction)clickCloseButton:(id)sender;
+-(IBAction)clickStation_TUC:(id)sender;
+-(IBAction)clickStation_SUN:(id)sender;
+-(IBAction)clickStation_TSY:(id)sender;
+-(IBAction)clickStation_LAK:(id)sender;
+-(IBAction)clickStation_NAC:(id)sender;
+-(IBAction)clickStation_OLY:(id)sender;
+-(IBAction)clickStation_KOW:(id)sender;
+-(IBAction)clickStation_HOK:(id)sender;
+-(IBAction)clickStation_AWE:(id)sender;
+-(IBAction)clickStation_AIR:(id)sender;
+-(IBAction)clickOpenSystemMapButton:(UIButton*)button;
+
+@end
+
+
+
+@protocol MapSearchViewControllerDelegate <NSObject>
+
+@optional
+
+-(void)mapSearchViewControllerDidSelectStationWithStationCode:(NSString*)stationsCode;
+
+@end

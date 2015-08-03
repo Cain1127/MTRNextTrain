@@ -1,0 +1,74 @@
+//
+//  NextTrainScheduleCell.m
+//  MTR Next Train
+//
+//  Created by  on 12年2月10日.
+//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//
+
+#import "SettingsCell.h"
+
+@implementation SettingsCell
+
+@synthesize lbl_station_name;
+
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+    if (self) {
+        // Initialization code
+        
+        //img_background = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"more_list_normal.png"]];
+        img_background = [[UIImageView alloc] init];
+        [img_background setContentMode:UIViewContentModeScaleAspectFit];
+        if(isFive==NO)
+            [img_background setFrame:CGRectMake(0, 0, 297, 37)]; //43)];
+        else
+            [img_background setFrame:CGRectMake(0, 0, 297, 45)];
+        [self.contentView addSubview:img_background];
+        [self setChecked:NO];
+        if(isFive==NO)
+            lbl_station_name = [[UILabel alloc] initWithFrame:CGRectMake(31, 0, 280, 37)];
+        else
+            lbl_station_name = [[UILabel alloc] initWithFrame:CGRectMake(31, 0, 280, 45)];
+
+        //[lbl_station_name setTextColor:[UIColor colorWithRed:33.0/255.0 green:62.0/255.0 blue:109.0/255.0 alpha:1]];
+        [lbl_station_name setTextColor:[UIColor blackColor]];
+        [lbl_station_name setBackgroundColor:[UIColor clearColor]];
+        [lbl_station_name setFont:[UIFont systemFontOfSize:16]];
+        [self.contentView addSubview:lbl_station_name];
+    }
+    return self;
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+{
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+-(void)dealloc
+{
+    [lbl_station_name release];
+    [img_background release];
+    
+    [super dealloc];
+}
+
+#pragma mark - control functions
+-(void)setChecked:(BOOL)checked
+{
+    if (checked)
+    {
+        img_background.image = [UIImage imageNamed:@"more_list_selected.png"];
+        img_background.hidden = NO;
+    }
+    else
+    {
+        img_background.image = [UIImage imageNamed:@"more_list_normal.png"];
+        img_background.hidden = YES;
+    }
+}
+
+@end

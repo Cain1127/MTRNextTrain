@@ -1,0 +1,65 @@
+//
+// Prefix header for all source files of the 'MTR Next Train' target in the 'MTR Next Train' project
+//
+
+#import <Availability.h>
+
+#ifndef __IPHONE_3_0
+#warning "This project uses features only available in iOS SDK 3.0 and later."
+#endif
+
+#ifdef __OBJC__
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+
+CGRect screenRect;
+BOOL isFive;
+
+#endif
+
+#define ReleaseObj(obj) if(obj!=nil){[obj release];obj=nil;}
+
+
+//------------------------------------------------------------------//
+
+#define mtrAppVersion @"2_0"
+
+// CHECK UPDATE
+//#define updateAPI @"http://mtr.mtel.ws/files/mtr/xml/updatent.xml"
+//#define updateAPI @"http://uatmtr.mtel.ws/files/MTRNextTrain/xml/nexttrain_version_check_all_devices.xml"
+#define updateAPI @"http://mtr8.mtel.ws/files/MTRNextTrain/xml/nexttrain_version_check_all_devices.xml"
+
+// AD BANNER
+//#define adlistAPI @"http://testsvr1.mtel.ws/java/MTRNextTrain/adlist.api?"
+#define adlistAPI @"http://mtr.mtel.ws/java/MTRNextTrain/adlist.api?"
+
+// T&C
+#define TandCAPI @"http://uatmtr.mtel.ws/files/MTRNextTrain/xml"
+
+// GET SCHEDULE
+//DEV
+#define getScheduleAPI @"http://testsvr3.mtel.ws/MTRNextTrain/mtr/NTAppModule/getSchedule.php?"
+//#define getScheduleAPI @"http://203.90.7.238/NT_v2/NTAppModule/getSchedule.php?"
+//???
+//#define getScheduleAPI @"http://testsvr1.mtel.ws/NT/NTAppModule/getSchedule.php?"
+//PRO
+//#define getScheduleAPI @"http://ntapp.mtr.com.hk/NTAppModule/getSchedule.php?"
+
+// REGISTER PUSH NOTIFICATION
+#define pushNotificationAPI @"http://testsvr1.mtel.ws/java/MTRNextTrain/regnotification.api?"
+
+// SECRET KEY
+//#define secretKey @"c90vfw4a"
+#define secretKey @"c90vfabc"
+
+//------------------------------------------------------------------//
+
+#ifdef DEBUG
+#define DEBUGS [NSString stringWithFormat:@"%sm:%d ",__PRETTY_FUNCTION__,__LINE__]
+#define DEBUGLog NSLog(@"%@",DEBUGS);
+#define DEBUGMSG(msg,...) NSLog(@"%@%@",DEBUGS,[NSString stringWithFormat:msg, ## __VA_ARGS__]);
+#else
+#define DEBUGS @""
+#define DEBUGLog
+#define DEBUGMSG(msg,...)
+#endif

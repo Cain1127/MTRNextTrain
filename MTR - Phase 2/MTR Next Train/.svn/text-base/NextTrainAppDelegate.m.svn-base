@@ -1,0 +1,1076 @@
+//
+//  MTRAppDelegate.m
+//  MTR
+//
+//  Created by Jeff Cheung on 11年10月25日.
+//  Copyright (c) 2011年 __MyCompanyName__. All rights reserved.
+//
+
+#import "NextTrainAppDelegate.h"
+#import "Flurry.h"
+@implementation NextTrainAppDelegate
+
+@synthesize window = _window;
+@synthesize navigation_controller = _navigation_controller;
+@synthesize tab_bar_bg_view = _tab_bar_bg_view;
+@synthesize next_train_button = _next_train_button, station_facilities_button = _station_facilities_button, favorite_button = _favorite_button, contact_us_button = _contact_us_button, more_button = _more_button;
+@synthesize update_app_bg_view = _update_app_bg_view, update_app_pop_up_view = _update_app_pop_up_view;
+@synthesize app_update_content_label = _app_update_content_label, cancel_button = _cancel_button;
+
+//jeff
+@synthesize app_update_update_now_button = _app_update_update_now_button;
+
+- (void)dealloc
+{
+    if (alertInvalidURL != nil)
+    {
+        alertInvalidURL.delegate = nil;
+        [alertInvalidURL release];
+        alertInvalidURL = nil;
+    }
+    
+    if (updateHandler != nil)
+    {
+        updateHandler.delegate = nil;
+        [updateHandler release];
+        updateHandler = nil;
+    }
+    
+    if(_update_app_pop_up_view != nil){
+        [_update_app_pop_up_view release];
+        _update_app_pop_up_view = nil;
+    }
+    if(_update_app_bg_view != nil){
+        [_update_app_bg_view removeFromSuperview];
+        [_update_app_bg_view release];
+        _update_app_bg_view = nil;
+    }
+    if(_next_train_button != nil){
+        [_next_train_button release];
+        _next_train_button = nil;
+    }
+    if(_station_facilities_button != nil){
+        [_station_facilities_button release];
+        _station_facilities_button = nil;
+    }
+    if(_favorite_button != nil){
+        [_favorite_button release];
+        _favorite_button = nil;
+    }
+    if(_contact_us_button != nil){
+        [_contact_us_button release];
+        _contact_us_button = nil;
+    }
+    if(_more_button != nil){
+        [_more_button release];
+        _more_button = nil;
+    }
+    if(_app_need_update != nil){
+        [_app_need_update release];
+        _app_need_update = nil;
+    }
+    if(_result_record != nil){
+        [_result_record removeAllObjects];
+        [_result_record release];
+        _result_record = nil;
+    }
+    [[SQLiteOperator sharedOperator] closeDatabase];
+    if(_tab_bar_bg_view != nil){
+        [_tab_bar_bg_view release];
+        _tab_bar_bg_view = nil;
+    }
+    if(_date_formatter != nil){
+		[_date_formatter release];
+		_date_formatter = nil;
+	}
+    if(_banner_view_controller != nil){
+		[_banner_view_controller terminate];
+        [_banner_view_controller.view removeFromSuperview];
+		[_banner_view_controller release];
+		_banner_view_controller = nil;
+	}
+    [_window release];
+    _navigation_controller.delegate = nil;
+    [_navigation_controller release];
+    
+    //jeff
+    self.app_update_update_now_button = nil;
+    [super dealloc];
+}
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{    
+    
+    [Flurry startSession:@"HJ4X7X6PB3942VGHQWWZ"];
+    screenRect = [[UIScreen mainScreen] applicationFrame];
+    if (screenRect.size.height > 500)
+    {
+        isFive = YES;
+        NSLog(@"is iPhone 5");
+    }else{
+        isFive = NO;
+    }
+    [[SQLiteOperator sharedOperator] openDatabase];
+    [self setupLang];
+    [self handleTabBarLanguage];
+    [self handleAppUpdatePopUpLanguage];
+    
+    _banner_view_controller = [[BannerViewController alloc] initWithNibName:@"BannerViewController" bundle:nil];
+    [_banner_view_controller send_request];
+    [_banner_view_controller didHidden];
+    [_navigation_controller.view addSubview:_banner_view_controller.view];
+    [CoreData sharedCoreData].banner_view_controller = _banner_view_controller;
+    
+    /*
+    NSMutableDictionary *plist_record = [NSMutableDictionary dictionaryWithContentsOfFile:[CoreData sharedCoreData].mtr_plist_path];
+    if(plist_record == nil){
+         plist_record = [[NSMutableDictionary new] autorelease];
+    }
+    else{
+        [[plist_record retain] autorelease];
+    }
+    
+    //after update the app, set first_time to YES
+    if([plist_record objectForKey:@"app_info"] != nil && [[plist_record objectForKey:@"app_info"] objectForKey:@"app_version"] != nil && [CoreData sharedCoreData].app_version != nil){
+        NSArray *plist_app_version_array = [[[plist_record objectForKey:@"app_info"] objectForKey:@"app_version"] componentsSeparatedByString:@"_"];
+        NSArray *own_app_version_array = [[CoreData sharedCoreData].app_version componentsSeparatedByString:@"_"];
+        if(plist_app_version_array != nil && [plist_app_version_array count] > 1 && plist_app_version_array != nil && [plist_app_version_array count] > 1){
+            if([[own_app_version_array objectAtIndex:0] intValue] > [[plist_app_version_array objectAtIndex:0] intValue]){
+                [plist_record removeAllObjects];
+                [plist_record setObject:@"YES" forKey:@"first_time"];
+                [plist_record writeToFile:[CoreData sharedCoreData].mtr_plist_path atomically:YES];
+            }
+            else if([[own_app_version_array objectAtIndex:0] intValue] == [[plist_app_version_array objectAtIndex:0] intValue] && [[own_app_version_array objectAtIndex:1] intValue] > [[plist_app_version_array objectAtIndex:1] intValue]){
+                [plist_record removeAllObjects];
+                [plist_record setObject:@"YES" forKey:@"first_time"];
+                [plist_record writeToFile:[CoreData sharedCoreData].mtr_plist_path atomically:YES];
+            }
+        }
+    }
+     
+    if([plist_record objectForKey:@"first_time"] == nil || [[plist_record objectForKey:@"first_time"] isEqualToString:@"YES"]){
+        NSMutableDictionary *record = [NSMutableDictionary new];
+        [record setObject:@"YES" forKey:@"all"];
+        [record setObject:@"YES" forKey:@"info"];
+        [plist_record setObject:record forKey:@"push"];
+        [plist_record writeToFile:[CoreData sharedCoreData].mtr_plist_path atomically:YES];
+        [record release];
+    }
+     */
+    
+    [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
+	[[UIApplication sharedApplication] registerForRemoteNotificationTypes: UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert];
+    
+//    [_window addSubview:_navigation_controller.view];
+    
+    if(isFive==NO)
+        _tab_bar_bg_view.frame = CGRectMake(0, 480, 320, 55);
+    else
+        _tab_bar_bg_view.frame = CGRectMake(0, 568, 320, 55);
+
+    [_navigation_controller.view addSubview:_tab_bar_bg_view];
+    [_navigation_controller.view addSubview:_update_app_bg_view];
+//    [_window addSubview:_tab_bar_bg_view];
+//    [_window addSubview:_update_app_bg_view];
+    
+//    ConnectionFailedViewController *connection_failed_view_controller = [[ConnectionFailedViewController alloc] initWithNibName:@"ConnectionFailedViewController" bundle:nil];
+//    [connection_failed_view_controller hiddenView];
+//    [CoreData sharedCoreData].connection_failed_view_controller = connection_failed_view_controller;
+//    [_navigation_controller.view addSubview:connection_failed_view_controller.view];
+//    [connection_failed_view_controller release];
+            
+    [_window addSubview:_navigation_controller.view];
+
+    
+    // loading mask
+    [CoreData sharedCoreData].mask = [[MaskViewController alloc] initWithNibName:@"MaskView" bundle:nil];
+    if(isFive == NO)
+        [CoreData sharedCoreData].mask.view.frame = CGRectMake(0, 20, 320, 460);
+    else
+        [CoreData sharedCoreData].mask.view.frame = CGRectMake(0, 20, 320, 548);
+
+	[_window addSubview:[CoreData sharedCoreData].mask.view];
+	[[CoreData sharedCoreData].mask hiddenMask];
+    
+    [_window makeKeyAndVisible];
+    
+    //start logic
+//    _isInServiceNoticeSection = YES;
+    
+    _result_record = [NSMutableDictionary new];
+    _date_formatter = [[NSDateFormatter alloc] init]; 
+    [_date_formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    
+    
+    NSMutableDictionary *plist_record = [[[self getUpdateHandler] initMtrPlist] retain];
+    
+    //first time to open app
+    if([plist_record objectForKey:@"first_time"] == nil || [[plist_record objectForKey:@"first_time"] isEqualToString:@"YES"]){
+//        [CoreData sharedCoreData].connection_failed_view_controller.connection_failed_close_app = NO;
+        [CoreData sharedCoreData].isConnectionFailedCloseApp = NO;    
+        
+        //[self handleFirstTimeToOpenApp];
+        [[self getUpdateHandler] handleFirstTimeToOpenApp];
+    }
+   
+    //it is not first time to open app
+    else if([plist_record objectForKey:@"first_time"] != nil && [[plist_record objectForKey:@"first_time"] isEqualToString:@"NO"]){
+//        [CoreData sharedCoreData].connection_failed_view_controller.connection_failed_close_app = NO;
+        [CoreData sharedCoreData].isConnectionFailedCloseApp = NO;
+        
+        //[self handleCommonOpenApp];
+        [[self getUpdateHandler] handleCommonOpenApp];
+        
+        [self clickNextTrainButton:nil];
+    }
+    
+    [plist_record release];
+    
+    return YES;
+}
+
+- (void)applicationWillResignActive:(UIApplication *)application
+{
+    /*
+     Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
+     Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
+     */
+}
+
+- (void)applicationDidEnterBackground:(UIApplication *)application
+{
+    /*
+     Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
+     If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+     */
+}
+
+- (void)applicationWillEnterForeground:(UIApplication *)application
+{
+    NSLog(@"applicationWillEnterForeground");
+    [_result_record removeAllObjects];
+    [_date_formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    
+    NSMutableDictionary *plist_record = [NSMutableDictionary dictionaryWithContentsOfFile:[CoreData sharedCoreData].mtr_plist_path];
+    if(plist_record != nil){
+        [[plist_record retain] autorelease];
+    }
+    
+    if([plist_record objectForKey:@"first_time"] == nil || [[plist_record objectForKey:@"first_time"] isEqualToString:@"YES"]){
+//        [CoreData sharedCoreData].connection_failed_view_controller.connection_failed_close_app = NO;
+        [CoreData sharedCoreData].isConnectionFailedCloseApp = NO;
+        
+        //[self handleFirstTimeToOpenApp];
+        [[self getUpdateHandler] handleFirstTimeToOpenApp];
+    }
+    else if([plist_record objectForKey:@"first_time"] != nil && [[plist_record objectForKey:@"first_time"] isEqualToString:@"NO"]){
+//        [CoreData sharedCoreData].connection_failed_view_controller.connection_failed_close_app = NO;
+        [CoreData sharedCoreData].isConnectionFailedCloseApp = NO;
+        
+        //[self handleCommonOpenApp];
+        [[self getUpdateHandler] handleCommonOpenApp];
+    }
+    /*
+     Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+     */
+    
+//    if(_isInServiceNoticeSection){
+//#ifdef DEBUG
+//        NSLog(@"clickNextTrainButton");
+//#endif
+//        [self clickNextTrainButton:nil];
+//    }
+}
+
+- (void)applicationDidBecomeActive:(UIApplication *)application
+{
+    /*
+     Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+     */
+}
+
+- (void)applicationWillTerminate:(UIApplication *)application
+{
+    /*
+     Called when the application is about to terminate.
+     Save data if appropriate.
+     See also applicationDidEnterBackground:.
+     */
+}
+
+- (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url
+{
+    [CoreData sharedCoreData].x_callback_url_source = nil;
+    [CoreData sharedCoreData].x_callback_url_source_name_en = nil;
+    [CoreData sharedCoreData].x_callback_url_source_name_zh_HK = nil;
+    [CoreData sharedCoreData].x_callback_url_success = nil;
+    
+    if (!url) 
+    {  
+        return NO; 
+    }
+    
+    // check whether valid url
+    DEBUGMSG(@"URL: %@", [url absoluteString]);
+    
+    BOOL isUrlValid = [CPAuthenticator authenticateURL: [url absoluteString] ];
+    
+    DEBUGMSG(@"Is Valid: %i", isUrlValid);
+    
+    if (isUrlValid)
+    {
+        NSString *query = url.query;
+        
+        NSArray *queryArray = [query componentsSeparatedByString:@"&"];
+        
+        DEBUGMSG(@"%@", queryArray);
+        
+        for (int i=0; i<[queryArray count]; i++)
+        {
+            NSArray *keyValue = [[queryArray objectAtIndex:i] componentsSeparatedByString:@"="];
+            DEBUGMSG(@"%@", keyValue);
+            
+            if ([keyValue count] == 2)
+            {
+                NSString *key = [keyValue objectAtIndex:0];
+                NSString *value = [keyValue objectAtIndex:1];
+                
+                if ([@"x-source" isEqualToString:key])
+                {
+                    [CoreData sharedCoreData].x_callback_url_source = value;
+                }
+                else if ([@"x-source-name-zh-HK" isEqualToString:key])
+                {
+                    [CoreData sharedCoreData].x_callback_url_source_name_zh_HK = value;
+                }
+                else if ([@"x-source-name-en" isEqualToString:key])
+                {
+                    [CoreData sharedCoreData].x_callback_url_source_name_en = value;
+                }
+                else if ([@"x-success" isEqualToString:key])
+                {
+                    [CoreData sharedCoreData].x_callback_url_success = value;
+                }
+            }
+        }
+     
+        DEBUGMSG(@"x_callback_url_source: %@", [CoreData sharedCoreData].x_callback_url_source);
+        DEBUGMSG(@"x_callback_url_source_name_en: %@", [CoreData sharedCoreData].x_callback_url_source_name_en);
+        DEBUGMSG(@"x_callback_url_source_name_zh_HK: %@", [CoreData sharedCoreData].x_callback_url_source_name_zh_HK);
+        DEBUGMSG(@"x_callback_url_success: %@", [CoreData sharedCoreData].x_callback_url_success);
+        
+        if ([_navigation_controller.topViewController respondsToSelector:@selector(handleCallbackMotherButton)])
+        {
+            UIViewController *topViewController = _navigation_controller.topViewController;
+            [topViewController performSelector:@selector(handleCallbackMotherButton)];
+        }
+        
+        return YES;
+    }
+    
+    NSString *message = NSLocalizedString(([NSString stringWithFormat:@"launch_not_authorized_%@", [CoreData sharedCoreData].lang]), nil);
+    
+    alertInvalidURL = [[CustomAlertView alloc] initWithMessage:message];
+    alertInvalidURL.delegate = self;
+    [alertInvalidURL show];
+    
+    return NO;
+}
+
+#pragma mark - Core
+//is not for first time to open the app
+-(void)handleTabBarLanguage{
+    [_next_train_button setBackgroundImage:[UIImage imageNamed:[NSString stringWithFormat:@"tapbar_next_train_off_%@.png", [CoreData sharedCoreData].lang]] forState:UIControlStateNormal];
+    [_next_train_button setBackgroundImage:[UIImage imageNamed:[NSString stringWithFormat:@"tapbar_next_train_on_%@.png", [CoreData sharedCoreData].lang]] forState:UIControlStateSelected];
+    
+    [_station_facilities_button setBackgroundImage:[UIImage imageNamed:[NSString stringWithFormat:@"station_facilities_off_%@.png", [CoreData sharedCoreData].lang]] forState:UIControlStateNormal];
+    [_station_facilities_button setBackgroundImage:[UIImage imageNamed:[NSString stringWithFormat:@"station_facilities_on_%@.png", [CoreData sharedCoreData].lang]] forState:UIControlStateSelected];
+    
+    [_favorite_button setBackgroundImage:[UIImage imageNamed:[NSString stringWithFormat:@"tapbar_my_favourite_off_%@.png", [CoreData sharedCoreData].lang]] forState:UIControlStateNormal];
+    [_favorite_button setBackgroundImage:[UIImage imageNamed:[NSString stringWithFormat:@"tapbar_my_favourite_on_%@.png", [CoreData sharedCoreData].lang]] forState:UIControlStateSelected];
+    
+    [_contact_us_button setBackgroundImage:[UIImage imageNamed:[NSString stringWithFormat:@"tapbar_contact_info_off_%@.png", [CoreData sharedCoreData].lang]] forState:UIControlStateNormal];
+    [_contact_us_button setBackgroundImage:[UIImage imageNamed:[NSString stringWithFormat:@"tapbar_contact_info_on_%@.png", [CoreData sharedCoreData].lang]] forState:UIControlStateSelected];
+    
+    [_more_button setBackgroundImage:[UIImage imageNamed:[NSString stringWithFormat:@"tapbar_more_off_%@.png", [CoreData sharedCoreData].lang]] forState:UIControlStateNormal];
+    [_more_button setBackgroundImage:[UIImage imageNamed:[NSString stringWithFormat:@"tapbar_more_on_%@.png", [CoreData sharedCoreData].lang]] forState:UIControlStateSelected];
+}
+
+/*
+-(BOOL)hasAppUpdate{
+    NSMutableDictionary *plistRecord = [NSMutableDictionary dictionaryWithContentsOfFile:[CoreData sharedCoreData].mtr_plist_path];
+    if(!plistRecord){
+        return NO;
+    }
+    
+    [plistRecord retain];
+    
+    NSString *appUpdate = [[plistRecord objectForKey:@"update_info"] objectForKey:@"app_update"];
+    if([appUpdate isEqualToString:forceUpdate]){
+        return YES;
+    }
+    
+    [plistRecord release];
+    return NO;
+}
+ */
+
+-(void)promptAppUpdateAlert{
+    [UIView beginAnimations:nil context:nil];
+    [UIView setAnimationDuration:0.3];
+    _update_app_bg_view.alpha = 1;
+    [UIView commitAnimations];
+}
+
+/*
+-(BOOL)hasNetwork{
+    Reachability *internetReachable = [[Reachability reachabilityForInternetConnection] retain];
+    NetworkStatus internetStatus = [internetReachable currentReachabilityStatus];
+    if (internetStatus == NotReachable){
+        [internetReachable release];
+        return NO;
+    }
+    [internetReachable release];
+    return YES;
+}
+ */
+        
+/*
+-(void)handleCommonOpenApp{
+    BOOL hasAppUpdate = [[self getUpdateHandler] hasAppUpdate]; //[self hasAppUpdate];
+    if(hasAppUpdate){
+        [self promptAppUpdateAlert];
+        return;
+    }
+    
+    BOOL hasNetwork = [self hasNetwork];
+    if(!hasNetwork){
+//        [[CoreData sharedCoreData].connection_failed_view_controller showView];
+        CustomAlertView *alert = [[CustomAlertView alloc] initWithMessage:NSLocalizedString(([NSString stringWithFormat:@"no_connection_content_%@", [CoreData sharedCoreData].lang]), nil)];
+        [alert show];
+        [alert release];
+    }
+    else{
+        BOOL loadXML = [self shouldLoadXMLBaseOn3amLogic];
+        if(loadXML){
+            ASIHTTPRequest *request = [[[ASIHTTPRequest alloc] initWithURL:[NSURL URLWithString:updateAPI]] autorelease];
+            NSLog(@"%@", request.url);
+            [request startSynchronous];
+            NSError *error = [request error];
+            if(!error){
+                //[self parseAndHandleUpdateAPIForCommon:request];
+                [[self getUpdateHandler] parseAndHandleUpdateAPIForCheckingFinished:request];
+                BOOL hasAppUpdate = [[self getUpdateHandler] hasAppUpdate]; //[self hasAppUpdate];
+                if(hasAppUpdate){
+                    [self promptAppUpdateAlert];
+                    return;
+                }
+            }
+            else{
+                NSLog(@"error : %@", [error description]);
+                //[[CoreData sharedCoreData].connection_failed_view_controller showView];
+            }
+        }
+        else{
+            NSLog(@"!loadXML");
+        }
+    }
+}
+ */
+
+/*
+-(BOOL)shouldLoadXMLBaseOn3amLogic{    
+    NSMutableDictionary *plistRecord = [[[NSMutableDictionary dictionaryWithContentsOfFile:[CoreData sharedCoreData].mtr_plist_path] retain] autorelease];
+    if(!plistRecord)
+        return YES;
+    [[plistRecord retain] autorelease];
+    
+     NSMutableDictionary *updateInfoRecord = [plistRecord objectForKey:@"update_info"];
+    if(!updateInfoRecord)
+        return YES;
+    [[updateInfoRecord retain] autorelease];
+    
+    NSString *latestCheckingDateStr = [updateInfoRecord objectForKey:@"latest_checking_date"];
+    if(!latestCheckingDateStr)
+        return YES;
+    [[latestCheckingDateStr retain] autorelease];
+    
+    NSDate *currentDate = [[[NSDate date] retain] autorelease];
+    
+    [_date_formatter setDateFormat:@"yyyy-MM-dd"];
+    NSString *todayAt3amStr = [NSString stringWithFormat:@"%@ 03:00:00", [_date_formatter stringFromDate:currentDate]];
+    [_date_formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    NSTimeInterval timeIntervalForBefore3am = [currentDate timeIntervalSinceDate:[_date_formatter dateFromString:todayAt3amStr]];
+    
+    [_date_formatter setDateFormat:@"yyyy-MM-dd"];
+    NSString *todayAt0amStr = [NSString stringWithFormat:@"%@ 00:00:00", [_date_formatter stringFromDate:currentDate]];
+    [_date_formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    NSTimeInterval timeIntervalForAfterOrEqualTo0am = [currentDate timeIntervalSinceDate:[_date_formatter dateFromString:todayAt0amStr]];
+    
+    BOOL isBefore3am = NO;
+    BOOL isAfterOrEqualTo0am = NO;
+    if(timeIntervalForBefore3am < 0){
+        isBefore3am = YES;
+    }
+    if(timeIntervalForAfterOrEqualTo0am >= 0){
+        isAfterOrEqualTo0am = YES;
+    }
+    
+    NSDate *beComparedDate = nil;
+    
+    if(isAfterOrEqualTo0am && isBefore3am){
+        NSDateComponents *dateComponents = [[NSCalendar currentCalendar] components:NSDayCalendarUnit | NSMonthCalendarUnit | NSYearCalendarUnit | NSWeekdayCalendarUnit | NSWeekCalendarUnit fromDate:currentDate];
+        NSDateComponents *lastDayDateComponents = [self getLastDayDateComponents:dateComponents];
+        [_date_formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+        beComparedDate = [_date_formatter dateFromString:[NSString stringWithFormat:@"%d-%d-%d 03:00:00", [lastDayDateComponents year], [lastDayDateComponents month], [lastDayDateComponents day]]];
+#ifdef DEBUG
+        NSLog(@"%@", [_date_formatter stringFromDate:beComparedDate]);
+#endif
+    }
+    else{
+        [_date_formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+        beComparedDate = [_date_formatter dateFromString:todayAt3amStr];
+    }
+     
+    NSTimeInterval timeDifference = [[_date_formatter dateFromString:latestCheckingDateStr] timeIntervalSinceDate:beComparedDate];
+    NSLog(@"%lf", timeDifference);
+     if(timeDifference < 0)
+         return YES;
+    return NO;
+}
+*/
+
+
+/*
+-(NSDateComponents*)getFirstDateCompnentsWithYear:(int)year month:(int)month{
+    [_date_formatter setDateFormat:@"yyyy-MM-dd"];
+    NSDate *firstDate = [_date_formatter dateFromString:[NSString stringWithFormat:@"%d-%d-%d", year, month, 1]];
+    
+    NSDateComponents *firstDateComponents = [[NSCalendar currentCalendar] components:NSDayCalendarUnit | NSMonthCalendarUnit | NSYearCalendarUnit | NSWeekdayCalendarUnit | NSWeekCalendarUnit fromDate:firstDate];
+    return firstDateComponents;
+}
+
+-(NSDateComponents*)getLastDayDateComponents:(NSDateComponents*)dateComponents{
+    int day = [dateComponents day];
+    int month = [dateComponents month];
+    int year = [dateComponents year];
+    
+    day--;
+    if(day < 1){
+        month--;
+        if(month < 1){
+            month = 12;
+            year--;
+            if(year < 0){
+                NSLog(@"Assume the app is not credy by year 0");
+            }
+        }
+        
+        NSRange range = [self getRangeWithDateComponents:[self getFirstDateCompnentsWithYear:year month:month]];
+        [dateComponents setDay:range.length];
+        [dateComponents setMonth:month];
+        [dateComponents setYear:year];
+        return dateComponents;
+        
+    }
+    
+    [dateComponents setDay:day];
+    return dateComponents;
+}
+
+-(NSRange)getRangeWithDateComponents:(NSDateComponents*)dateComponents{
+    return ([[NSCalendar currentCalendar] rangeOfUnit:NSDayCalendarUnit
+                                               inUnit:NSMonthCalendarUnit
+                                              forDate:[[NSCalendar currentCalendar] dateFromComponents:dateComponents]]);
+}
+*/
+
+/*
+-(void)handleFirstTimeToOpenApp{
+    [self copyDBFilesToLibrary];
+    [self saveAppVersion];
+    //[self setLatestCheckingDateAndSetAppUpdateToNoNeed];
+    [self hasAnyUpdateForApp];
+}
+*/
+ 
+/*
+-(void)hasAnyUpdateForApp{
+    BOOL hasNetwork = [self hasNetwork];
+    if(!hasNetwork){
+//        [[CoreData sharedCoreData].connection_failed_view_controller showView];
+        
+        CustomAlertView *alert = [[CustomAlertView alloc] initWithMessage:NSLocalizedString(([NSString stringWithFormat:@"no_connection_content_%@", [CoreData sharedCoreData].lang]), nil)];
+        [alert show];
+        [alert release];
+        
+        return;
+    }
+    BOOL go_to_check_has_available_update_found_today = YES;
+    
+    ASIHTTPRequest *request = [[[ASIHTTPRequest alloc] initWithURL:[NSURL URLWithString:updateAPI]] autorelease];
+    NSLog(@"%@", request.url);
+    [request startSynchronous];
+    NSError *error = [request error];
+    if(!error){
+        go_to_check_has_available_update_found_today = [self parseAndHandleUpdateAPIForCommon:request];
+    }
+    else{
+        NSLog(@"error : %@", [error description]);
+        //[[CoreData sharedCoreData].connection_failed_view_controller showView];
+    }
+     
+    
+    if(go_to_check_has_available_update_found_today){
+        NSMutableDictionary *plist_record = [[[NSMutableDictionary dictionaryWithContentsOfFile:[CoreData sharedCoreData].mtr_plist_path] retain] autorelease];
+        
+        NSString *app_update = [[plist_record objectForKey:@"update_info"] objectForKey:@"app_update"];
+        if([app_update isEqualToString:forceUpdate]){
+            [UIView beginAnimations:nil context:nil];
+            [UIView setAnimationDuration:0.3];
+            _update_app_bg_view.alpha = 1;
+            [UIView commitAnimations];
+        }
+        
+    }
+}
+ */
+
+/*
+-(void)saveAppVersion{
+    NSMutableDictionary *plistRecord = [[[NSMutableDictionary dictionaryWithContentsOfFile:[CoreData sharedCoreData].mtr_plist_path] retain] autorelease];
+    NSMutableDictionary *app_info_record = [[NSMutableDictionary new] autorelease];
+    [app_info_record setObject:[CoreData sharedCoreData].app_version forKey:@"app_version"];
+    [plistRecord setObject:app_info_record forKey:@"app_info"];
+    [plistRecord writeToFile:[CoreData sharedCoreData].mtr_plist_path atomically:YES];
+}
+
+-(void)setLatestCheckingDateAndSetAppUpdateToNoNeed{
+    NSMutableDictionary *plistRecord = [[[NSMutableDictionary dictionaryWithContentsOfFile:[CoreData sharedCoreData].mtr_plist_path] retain] autorelease];
+    NSMutableDictionary *updateInfoRecord = [[NSMutableDictionary new] autorelease];
+    [_date_formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    [updateInfoRecord setObject:[_date_formatter stringFromDate:[NSDate date]] forKey:@"latest_checking_date"];
+    [updateInfoRecord setObject:noNeedUpdate forKey:@"app_update"];
+    [plistRecord setObject:updateInfoRecord forKey:@"update_info"];
+    [plistRecord writeToFile:[CoreData sharedCoreData].mtr_plist_path atomically:YES];
+}
+
+-(void)setLatestCheckingDate{
+    NSMutableDictionary *plistRecord = [[[NSMutableDictionary dictionaryWithContentsOfFile:[CoreData sharedCoreData].mtr_plist_path] retain] autorelease];
+    NSMutableDictionary *updateInfoRecord = nil;
+    if([plistRecord objectForKey:@"update_info"] == nil){
+        updateInfoRecord = [[NSMutableDictionary new] autorelease];
+    }
+    else{
+        updateInfoRecord = [plistRecord objectForKey:@"update_info"];
+    }
+
+    [_date_formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    [updateInfoRecord setObject:[_date_formatter stringFromDate:[NSDate date]] forKey:@"latest_checking_date"];
+    [plistRecord setObject:updateInfoRecord forKey:@"update_info"];
+    [plistRecord writeToFile:[CoreData sharedCoreData].mtr_plist_path atomically:YES];
+}
+ */
+
+/*
+-(void)copyDBFilesToLibrary{
+    NSLog(@"copyDBFilesToLibrary");
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSError *error;
+    BOOL success;
+    
+    success = [fileManager removeItemAtPath:[self getDatabaseDestinationPathWithDBName:@"contact" DBExt:@".sqlite"] error:&error];
+    if(!success){
+        NSLog(@"remove contact error: %@", [error localizedDescription]);
+    }
+    success = [fileManager removeItemAtPath:[self getDatabaseDestinationPathWithDBName:@"facility" DBExt:@".sqlite"] error:&error];
+    if(!success){
+        NSLog(@"remove facility error: %@", [error localizedDescription]);
+    }
+    NSString *defaultDBPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:[NSString stringWithFormat:@"%@%@", @"contact", @".sqlite"]];
+    success = [fileManager copyItemAtPath:defaultDBPath toPath:[self getDatabaseDestinationPathWithDBName:@"contact" DBExt:@".sqlite"] error:&error];    
+    if(!success){
+        NSLog(@"copy contact error: %@", [error localizedDescription]);
+    }
+    
+    defaultDBPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:[NSString stringWithFormat:@"%@%@", @"facility", @".sqlite"]];
+    success = [fileManager copyItemAtPath:defaultDBPath toPath:[self getDatabaseDestinationPathWithDBName:@"facility" DBExt:@".sqlite"] error:&error];    
+    if(!success){
+        NSLog(@"copy facility error: %@", [error localizedDescription]);
+    }
+}
+
+-(NSString*)getDatabaseDestinationPathWithDBName:(NSString*)DBName DBExt:(NSString*)DBExt{
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+	NSString *documentsDirectory = [paths objectAtIndex:0];
+	NSString *path = [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"%@%@", DBName, DBExt]];
+	return path;
+}
+ */
+
+-(UpdateHandler*)getUpdateHandler
+{
+    if (updateHandler == nil)
+    {
+        updateHandler = [[UpdateHandler alloc] init];
+        //updateHandler.delegate = self;
+    }
+    
+    return updateHandler;
+}
+
+/*
+-(BOOL)handleAppUpdate:(NSString*)app_need_update{    
+    if(app_need_update != nil)
+        [[app_need_update retain] autorelease];
+    
+    //app don't need to update
+    NSMutableDictionary *plist_record = [[[NSMutableDictionary dictionaryWithContentsOfFile:[CoreData sharedCoreData].mtr_plist_path] retain] autorelease];
+    
+    if(app_need_update != nil && [app_need_update isEqualToString:@"0"]){
+        //        
+        if([plist_record objectForKey:@"update_info"] == nil){
+            NSMutableDictionary *updateInfoRecord = [[NSMutableDictionary new] autorelease];
+            [updateInfoRecord setObject:noNeedUpdate forKey:@"app_update"];
+            NSLog(@"updateInfoRecord %@", updateInfoRecord);
+            [plist_record setObject:updateInfoRecord forKey:@"update_info"];
+        } 
+        else{
+            [[plist_record objectForKey:@"update_info"] setObject:noNeedUpdate forKey:@"app_update"];
+        }
+        [plist_record writeToFile:[CoreData sharedCoreData].mtr_plist_path atomically:YES];
+        return NO;
+    }
+    //app need to update
+    else{
+        NSLog(@"app_update forceUpdate");
+        [UIView beginAnimations:nil context:nil];
+        [UIView setAnimationDuration:0.3];
+        _update_app_bg_view.alpha = 1;
+        [UIView commitAnimations];
+        
+        if([plist_record objectForKey:@"update_info"] == nil){
+            NSMutableDictionary *updateInfoRecord = [[NSMutableDictionary new] autorelease];
+            [updateInfoRecord setObject:forceUpdate forKey:@"app_update"];
+            NSLog(@"updateInfoRecord %@", updateInfoRecord);
+            [plist_record setObject:updateInfoRecord forKey:@"update_info"];
+        } 
+        else{
+            [[plist_record objectForKey:@"update_info"] setObject:forceUpdate forKey:@"app_update"];
+        }
+    }
+    [plist_record writeToFile:[CoreData sharedCoreData].mtr_plist_path atomically:YES];
+    return YES;
+    
+}
+ */
+
+-(void)handleAppUpdatePopUpLanguage{
+    _app_update_title_label.text = NSLocalizedString(([NSString stringWithFormat:@"app_update_title_%@", [CoreData sharedCoreData].lang]), nil);
+    
+    _app_update_content_label.text = NSLocalizedString(([NSString stringWithFormat:@"app_update_content_%@", [CoreData sharedCoreData].lang]), nil);
+    
+    [_app_update_update_now_button setTitle:NSLocalizedString(([NSString stringWithFormat:@"app_update_update_now_%@", [CoreData sharedCoreData].lang]), nil) forState:UIControlStateNormal];
+    
+    [_cancel_button setTitle:NSLocalizedString(([NSString stringWithFormat:@"cancel_%@", [CoreData sharedCoreData].lang]), nil) forState:UIControlStateNormal];
+    
+    //jeff 20130829
+    _cancel_button.hidden = YES;
+    _app_update_update_now_button.frame = CGRectMake(_app_update_update_now_button.frame.origin.x, 138.0, _app_update_update_now_button.frame.size.width, _app_update_update_now_button.frame.size.height);
+    
+}
+
+-(void)handleBannerLanguage
+{
+    [[CoreData sharedCoreData].banner_view_controller send_request];
+}
+
+-(void)launchNextTrainWithLineCode:(NSString*)lineCode stationCode:(NSString*)stationCode
+{
+    [_navigation_controller popToRootViewControllerAnimated:NO];
+    
+    SelectStationViewController *temp = [[SelectStationViewController alloc] initWithNibName:@"SelectStationViewController" bundle:nil];
+    temp.launch_line_code = lineCode;
+    temp.launch_station_code = stationCode;
+    [_navigation_controller pushViewController:temp animated:NO];
+    [temp release]; 
+}
+
+-(void)sendPushNotificationTokenToServer
+{
+    NSString *token = [CoreData sharedCoreData].psuh_token;
+    
+    if (token != nil)
+    {
+        ASIHTTPRequest *request = [[[ASIHTTPRequest alloc] initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@UDID=%@&token=%@&cs=%@&dt=%@&lang=%@",
+                                                                                             pushNotificationAPI,
+                                                                                             [CoreData sharedCoreData].udid,
+                                                                                             token,
+                                                                                             [CoreData md5:[NSString stringWithFormat:@"%@nexttrainmtrmtel%@", [CoreData sharedCoreData].udid,token]],
+                                                                                             [CoreData sharedCoreData].device, 
+                                                                                             [CoreData sharedCoreData].lang]]] autorelease];
+        NSLog(@"Push URL: %@", request.url);
+        [[CoreData sharedCoreData].common_queue addOperation:request];
+    }
+}
+
+#pragma mark - ASIHTTPRequest Parsing And Handling
+
+/*
+-(BOOL)parseAndHandleUpdateAPIForCommon:(ASIHTTPRequest*)request{
+    if([request responseStatusCode] != 200){
+//        [[CoreData sharedCoreData].connection_failed_view_controller showView];        
+                
+        CustomAlertView *alert = [[CustomAlertView alloc] initWithMessage:NSLocalizedString(([NSString stringWithFormat:@"no_connection_content_%@", [CoreData sharedCoreData].lang]), nil)];
+        [alert show];
+        [alert release];
+        
+        return YES;
+    }
+    
+    [_result_record removeAllObjects];
+    
+    NSArray *item_array = PerformXMLXPathQuery([request responseData], [NSString stringWithFormat:@"//versions/iphone/version[num='%@']", [CoreData sharedCoreData].app_version]);
+    
+    NSString *app_need_update = nil;
+    
+    for(int x = 0; item_array != nil && x < [item_array count]; x++){
+        NSArray *result_array = [[item_array objectAtIndex:x] objectForKey:@"nodeChildArray"];
+        for(int y = 0; result_array != nil && y < [result_array count]; y++){
+            if([[result_array objectAtIndex:y] objectForKey:@"nodeName"] != nil && [[[result_array objectAtIndex:y] objectForKey:@"nodeName"] isEqualToString:@"is_upgrade_required"]){
+                if([[[result_array objectAtIndex:y] objectForKey:@"nodeChildArray"] count] == 1){
+                    if([[[[result_array objectAtIndex:y] objectForKey:@"nodeChildArray"] objectAtIndex:0] objectForKey:@"nodeContent"] != nil)
+                        app_need_update = [[[[[[result_array objectAtIndex:y] objectForKey:@"nodeChildArray"] objectAtIndex:0] objectForKey:@"nodeContent"] retain] autorelease];
+                }
+                else {
+                    if([[result_array objectAtIndex:y] objectForKey:@"nodeContent"] != nil)
+                        app_need_update = [[[[result_array objectAtIndex:y] objectForKey:@"nodeContent"] retain] autorelease];
+                }
+            }
+            if([[result_array objectAtIndex:y] objectForKey:@"nodeName"] != nil && [[[result_array objectAtIndex:y] objectForKey:@"nodeName"] isEqualToString:@"resources"]){
+                NSArray *resources_array = [[result_array objectAtIndex:y] objectForKey:@"nodeChildArray"];
+                for(int z = 0; resources_array != nil && z < [resources_array count]; z++){
+                    NSArray *attribute_array = [[resources_array objectAtIndex:z] objectForKey:@"nodeAttributeArray"];
+                    if(attribute_array != nil){
+                        [_result_record setObject:attribute_array forKey:[[resources_array objectAtIndex:z] objectForKey:@"nodeName"]];
+                    }
+                }
+            }
+        }
+    }
+    
+    BOOL go_to_check_has_available_update_found_today = [self handleAppUpdate:app_need_update];
+    [self setLatestCheckingDate];
+
+    return go_to_check_has_available_update_found_today;
+}
+ */
+
+#pragma mark -
+#pragma mark Handle Click Button Events
+
+-(IBAction)clickUpdateNowButton:(UIButton*)button{
+    //lack of id, can find in itunes connect
+    //itms-apps://phobos.apple.com/WebObjects/MZStore.woa/wa/viewSoftwareUpdate?id=mt=8
+//    NSMutableDictionary *plist_record = [[[NSMutableDictionary dictionaryWithContentsOfFile:[CoreData sharedCoreData].mtr_plist_path] retain] autorelease];
+//    [plist_record setObject:@"YES" forKey:@"first_time"];
+    
+//    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"itms-apps://phobos.apple.com/WebObjects/MZStore.woa/wa/viewSoftwareUpdate?mt=8"]];
+    [[self getUpdateHandler] updateNow];
+}
+
+-(IBAction)clickQuitAppButton:(UIButton*)button{
+    _update_app_bg_view.alpha = 0;
+   // exit(0);
+}
+
+-(IBAction)clickNextTrainButton:(UIButton*)button{  
+    [_navigation_controller popToRootViewControllerAnimated:NO];
+//    ServiceUpdateViewController *temp = [[ServiceUpdateViewController alloc] initWithNibName:@"ServiceUpdateViewController" bundle:nil];
+//    [_navigation_controller pushViewController:temp animated:NO];
+//    [temp release];
+        
+    SelectStationViewController *temp = [[SelectStationViewController alloc] initWithNibName:@"SelectStationViewController" bundle:nil];
+    [_navigation_controller pushViewController:temp animated:NO];
+    [temp release];  
+}
+
+-(IBAction)clickStationFacilitiesButton:(UIButton *)button{
+    [_navigation_controller popToRootViewControllerAnimated:NO];
+//    StationFacilitiesViewController *temp = [[StationFacilitiesViewController alloc] initWithNibName:@"StationFacilitiesViewController" bundle:nil];
+//    [_navigation_controller pushViewController:temp animated:NO];
+//    [temp release];    
+}
+
+-(IBAction)clickFavoriteButton:(UIButton *)button{
+    [_navigation_controller popToRootViewControllerAnimated:NO];
+//    PushSettingsViewController *temp = [[PushSettingsViewController alloc] initWithNibName:@"PushSettingsViewController" bundle:nil];
+//    [_navigation_controller pushViewController:temp animated:NO];
+//    [temp release];
+    
+    FavoriteViewController *temp = [[FavoriteViewController alloc] initWithNibName:@"FavoriteViewController" bundle:nil];
+    [_navigation_controller pushViewController:temp animated:NO];
+    [temp release];    
+}
+
+-(IBAction)clickContactUsButton:(UIButton*)button{    
+    [_navigation_controller popToRootViewControllerAnimated:NO];
+    ContactUsViewController *temp = [[ContactUsViewController alloc] initWithNibName:@"ContactUsViewController" bundle:nil];
+    [_navigation_controller pushViewController:temp animated:NO];
+    [temp release];
+}
+
+-(IBAction)clickMoreButton:(UIButton*)button{
+    [_navigation_controller popToRootViewControllerAnimated:NO];
+    MoreViewController *temp = [[MoreViewController alloc] initWithNibName:@"MoreViewController" bundle:nil];
+    [_navigation_controller pushViewController:temp animated:NO];
+    [temp release];
+}
+
+#pragma mark -
+#pragma mark Set Languages
+
+-(void)setupLang{
+	NSUserDefaults *user_defaults = [NSUserDefaults standardUserDefaults];
+	if([user_defaults objectForKey:@"lang"] == nil) {
+		NSArray *apple_languages = [user_defaults objectForKey:@"AppleLanguages"];
+		NSString *system_language = nil;
+        if(apple_languages != nil && [apple_languages count] > 0)
+            system_language = [apple_languages objectAtIndex:0];
+		if([system_language isEqualToString:@"en"]){
+			[user_defaults setObject:@"en" forKey:@"lang"];
+		}
+		else if([system_language isEqualToString:@"zh-Hant"]){
+			[user_defaults setObject:@"zh_TW" forKey:@"lang"];
+		}
+		else{
+			[user_defaults setObject:@"en" forKey:@"lang"];
+		}
+		[user_defaults synchronize];
+	}
+	[CoreData sharedCoreData].lang = [user_defaults objectForKey:@"lang"];
+}
+
+#pragma mark -
+#pragma mark Notification Delegate
+-(void) application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+    NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken");
+    
+	NSString *token = [[[[NSString stringWithFormat:@"%@",deviceToken] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""];
+    
+    [CoreData sharedCoreData].psuh_token = token;
+    
+    [self sendPushNotificationTokenToServer];
+}
+
+-(void) application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
+    NSLog(@"didFailToRegisterForRemoteNotificationsWithError");
+}
+
+-(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+    NSLog(@"didReceiveRemoteNotification");
+}
+
+#pragma mark -
+#pragma mark Handle UINavigationControllerDelegate
+
+-(void)navigationController:(UINavigationController *)navigationController willShowViewController:(UIViewController *)viewController animated:(BOOL)animated{    
+    
+    DEBUGLog
+//    _isInServiceNoticeSection = NO;
+    
+	if([[viewController.navigationController.visibleViewController class] isEqual:[RootViewController class]] ||
+       [[viewController.navigationController.visibleViewController class] isEqual:[SystemMapViewController class]])
+    {	
+        _next_train_button.selected = _station_facilities_button.selected = _favorite_button.selected = _contact_us_button.selected = _more_button.selected = NO;
+		[UIView beginAnimations:nil context:nil];
+		[UIView setAnimationDuration:0.3];
+        if(isFive == NO)
+            _tab_bar_bg_view.frame = CGRectMake(0, 480, 320, 55);
+        else
+            _tab_bar_bg_view.frame = CGRectMake(0, 568, 320, 55);
+
+		[UIView commitAnimations];
+	}
+    else{
+		[UIView beginAnimations:nil context:nil];
+		[UIView setAnimationDuration:0.3];
+        if(isFive == NO)
+            _tab_bar_bg_view.frame = CGRectMake(0, 425, 320, 55);
+        else
+            _tab_bar_bg_view.frame = CGRectMake(0, 513, 320, 55);
+
+		[UIView commitAnimations];
+    }
+    
+    
+    if([[viewController.navigationController.visibleViewController class] isEqual:[SelectStationViewController class]]){
+//        _isInServiceNoticeSection = YES;
+        
+        _station_facilities_button.selected = _favorite_button.selected = _contact_us_button.selected = _more_button.selected = NO;
+        _next_train_button.selected = YES;
+        /*
+        [UIView beginAnimations:nil context:nil];
+        [UIView setAnimationDuration:0.3];
+        _banner_view_controller.view.alpha = 0;
+        [UIView commitAnimations];
+         */
+    }
+    /*
+    else if([[viewController.navigationController.visibleViewController class] isEqual:[StationFacilitiesViewController class]]){	
+        _service_update_button.selected = _push_settings_button.selected = _contact_us_button.selected = _more_button.selected = NO;
+        _station_facilities_button.selected = YES;
+        [viewController.navigationController.visibleViewController.view addSubview:_banner_view_controller.view];
+        [UIView beginAnimations:nil context:nil];
+        [UIView setAnimationDuration:0.3];
+        _banner_view_controller.view.alpha = 1;
+        [UIView commitAnimations];
+    }
+     */
+    else if([[viewController.navigationController.visibleViewController class] isEqual:[FavoriteViewController class]]){	
+        _next_train_button.selected = _station_facilities_button.selected = _contact_us_button.selected = _more_button.selected = NO;
+        _favorite_button.selected = YES;
+        /*
+        [viewController.navigationController.visibleViewController.view addSubview:_banner_view_controller.view];
+        [UIView beginAnimations:nil context:nil];
+        [UIView setAnimationDuration:0.3];
+        _banner_view_controller.view.alpha = 1;
+        [UIView commitAnimations];
+         */
+    }
+    else if([[viewController.navigationController.visibleViewController class] isEqual:[MoreViewController class]]){	
+        _next_train_button.selected = _station_facilities_button.selected = _favorite_button.selected = _contact_us_button.selected = NO;
+        _more_button.selected = YES;
+        /*
+        [viewController.navigationController.visibleViewController.view addSubview:_banner_view_controller.view];
+        [UIView beginAnimations:nil context:nil];
+        [UIView setAnimationDuration:0.3];
+        _banner_view_controller.view.alpha = 1;
+        [UIView commitAnimations];
+         */
+    }
+    else if([[viewController.navigationController.visibleViewController class] isEqual:[ContactUsViewController class]]){	
+        _next_train_button.selected = _station_facilities_button.selected = _favorite_button.selected = _more_button.selected = NO;
+        _contact_us_button.selected = YES;
+        /*
+        [viewController.navigationController.visibleViewController.view insertSubview:_banner_view_controller.view belowSubview:((ContactUsViewController*)viewController.navigationController.visibleViewController).station_contact_picker_bg_view];
+        [UIView beginAnimations:nil context:nil];
+        [UIView setAnimationDuration:0.3];
+        _banner_view_controller.view.alpha = 1;
+        [UIView commitAnimations];
+         */
+    }
+     
+}
+
+
+#pragma mark - Custom Alert View Delegate
+
+-(void)CustomAlertView:(CustomAlertView *)currentCustomAlertView didDismissWithButtonIndex:(int)buttonIndex
+{
+    //exit(0);
+}
+
+
+@end
+                

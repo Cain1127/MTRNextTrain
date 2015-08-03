@@ -1,0 +1,22 @@
+//
+//  StationFacilitieStationCell.h
+//  bochk
+//
+//  Created by Jeff Cheung on 11年3月2日.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "CoreData.h"
+
+@interface SelectStationStationCell : UITableViewCell {
+    UILabel *_value_label;
+    UIImageView *_dot_image_view;
+}
+
+@property (nonatomic, retain) UILabel *value_label;
+@property (nonatomic, retain) UIImageView *dot_image_view;
+
+-(void)reset;
+
+@end

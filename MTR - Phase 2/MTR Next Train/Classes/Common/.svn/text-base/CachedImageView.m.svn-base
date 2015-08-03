@@ -1,0 +1,132 @@
+//
+//  CachedImageView.m
+//  MTel Components
+//
+//  Created by Algebra Lo on 10年3月12日.
+//  Copyright 2010 __MyCompanyName__. All rights reserved.
+//
+
+#import "CachedImageView.h"
+#define	Old	10
+
+@implementation CachedImageView
+@synthesize delegate;
+
+-(void) dealloc {
+	[self cancelLoading];
+	[super dealloc];
+}
+
+-(void)loadImageWithURL:(NSString *)url {
+	
+	if (url==nil/* || [current_url isEqualToString:url]*/) {
+		return;
+	}
+	[self cancelLoading];
+	current_url = url;
+	path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, TRUE) objectAtIndex:0];
+	path = [NSString stringWithFormat:@"%@/ImageCache",path];
+	NSFileManager *file_manager = [NSFileManager defaultManager];
+	if (![file_manager fileExistsAtPath:path]) {
+		[file_manager createDirectoryAtPath:path withIntermediateDirectories:TRUE attributes:nil error:nil];
+	}
+	[file_manager release];
+	path = [NSString stringWithFormat:@"%@/%@",path,[url stringByReplacingOccurrencesOfString:@"/" withString:@"_"]];
+	NSData *image_data = [NSData dataWithContentsOfFile:path];
+	if (image_data==nil || [image_data length]==0) {
+//		NSLog(@"image not in cache");
+		loading = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+		loading.center = CGPointMake(self.frame.size.width/2, self.frame.size.height/2);
+		[self addSubview:loading];
+		[loading startAnimating];
+		[path retain];
+		[self retain];
+		asi_request = [[ASIHTTPRequest alloc] initWithURL:[NSURL URLWithString:url]];
+		asi_request.delegate = self;
+		[[CoreData sharedCoreData].graphic_queue addOperation:asi_request];
+/*		image_data = [NSData dataWithContentsOfURL:[NSURL URLWithString:url]];
+		[image_data writeToFile:path atomically:TRUE];*/
+	} else {
+//		NSLog(@"image in cache");
+		self.image = [UIImage imageWithData:image_data];
+		[self.delegate imageLoaded:self];
+	}
+/*
+	return [super imageWithData:image_data];*/
+}
+
+-(void)cancelLoading {
+	if (loading!=nil) {
+		[loading stopAnimating];
+		[loading removeFromSuperview];
+		[loading release];
+		loading = nil;
+	}
+	if (asi_request!=nil) {
+		[asi_request cancel];
+		asi_request=nil;
+	}
+}
+
++(void)clearAllCache {
+	NSString *path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, TRUE) objectAtIndex:0];
+	path = [NSString stringWithFormat:@"%@/ImageCache",path];
+	NSFileManager *file_manager = [NSFileManager defaultManager];
+	NSArray *file_list = [file_manager contentsOfDirectoryAtPath:path error:nil];
+	for (int i=0; i<[file_list count]; i++) {
+		NSString *filename = [NSString stringWithFormat:@"%@/%@",path,[file_list objectAtIndex:i]];
+		[file_manager removeItemAtPath:filename error:nil];
+	}
+	[file_manager release];
+}
+
++(void) clearOldCache {
+	NSString *path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, TRUE) objectAtIndex:0];
+	path = [NSString stringWithFormat:@"%@/ImageCache",path];
+	NSFileManager *file_manager = [NSFileManager defaultManager];
+	NSArray *file_list = [file_manager contentsOfDirectoryAtPath:path error:nil];
+	for (int i=0; i<[file_list count]; i++) {
+		if ([(NSDate *)[[file_manager attributesOfItemAtPath:[NSString stringWithFormat:@"%@/%@",path,[file_list objectAtIndex:i]] error:nil] objectForKey:NSFileCreationDate] timeIntervalSinceNow]<-3600*24*Old) {
+			[file_manager removeItemAtPath:[NSString stringWithFormat:@"%@/%@",path,[file_list objectAtIndex:i]] error:nil];
+		}
+	}
+	[file_manager release];
+}
+
+
+-(void)requestFinished:(ASIHTTPRequest *)request {
+	if([request responseStatusCode] != 200){
+		[self.delegate imageFailed:self];
+		[self release];
+		return;
+	}
+	
+	if (loading!=nil) {
+		[loading stopAnimating];
+		[loading removeFromSuperview];
+		[loading release];
+		loading = nil;
+	}
+	self.image = [UIImage imageWithData:[request responseData]];
+	[[request responseData] writeToFile:path atomically:TRUE];
+	[path release];
+	[request release];
+	asi_request = nil;
+	[self.delegate imageLoaded:self];
+	[self release];
+}
+
+-(void)requestFailed:(ASIHTTPRequest *)request {
+	if (loading!=nil) {
+		[loading stopAnimating];
+		[loading removeFromSuperview];
+		[loading release];
+		loading = nil;
+	}
+	[request release];
+	asi_request = nil;
+	[self.delegate imageFailed:self];
+	[self release];
+}
+@end
+

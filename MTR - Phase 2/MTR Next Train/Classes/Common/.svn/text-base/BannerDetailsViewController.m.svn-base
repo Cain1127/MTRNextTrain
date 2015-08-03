@@ -1,0 +1,216 @@
+//
+//  bannerDetailsViewController.m
+//  creditGain
+//
+//  Created by Jeff Cheung on 11年4月18日.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#import "BannerDetailsViewController.h"
+
+@implementation BannerDetailsViewController
+
+@synthesize _url_path;
+
+// The designated initializer.  Override if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
+/*
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization.
+    }
+    return self;
+}
+*/
+
+- (void)dealloc {
+    
+    DEBUGLog
+    
+    if (customAlertView != nil)
+    {
+        [customAlertView clearDelegatesAndCancel];
+        [customAlertView release];
+        customAlertView = nil;
+    }
+    
+	if(_web_view != nil){
+		[_web_view stopLoading];
+		_web_view.delegate = nil;
+	}
+	if(_url_path != nil){
+		[_url_path release];
+		_url_path = nil;
+	}
+	if(_web_view_timer != nil){
+        [self stopWebViewTimeoutTimer];
+	}
+//    if(_connection_failed_view_controller != nil){
+//        _connection_failed_view_controller.delegate = nil;
+//        [_connection_failed_view_controller.view removeFromSuperview];
+//        [_connection_failed_view_controller release];
+//        _connection_failed_view_controller = nil;
+//    }
+    [super dealloc];
+}
+
+
+
+// Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+//    _connection_failed_view_controller = [[ConnectionFailedViewController alloc] initWithNibName:@"ConnectionFailedViewController" bundle:nil];
+//    [_connection_failed_view_controller hiddenView];
+//    [self.view addSubview:_connection_failed_view_controller.view];
+    
+	[_close_button setTitle:NSLocalizedString(([NSString stringWithFormat:@"close_%@", [CoreData sharedCoreData].lang]), nil)];
+//	[_web_view loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:_url_path]]];
+	
+	_banner_detail_mask_view.hidden = NO;
+	NSURLRequest *url_request = [NSURLRequest requestWithURL:[NSURL URLWithString:_url_path]];
+	[_web_view loadRequest:url_request];	
+    DEBUGMSG(@"URL: %@", _url_path);
+	
+    [self startWebViewTimeoutTimer];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+	NSHTTPCookie *cookie;
+	NSHTTPCookieStorage *cookie_storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+	for(cookie in [cookie_storage cookies]){
+		[cookie_storage deleteCookie:cookie];
+	}
+}
+
+
+
+/*
+// Override to allow orientations other than the default portrait orientation.
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+    // Return YES for supported orientations.
+    return (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
+*/
+
+- (void)didReceiveMemoryWarning {
+    // Releases the view if it doesn't have a superview.
+    [super didReceiveMemoryWarning];
+    
+    // Release any cached data, images, etc. that aren't in use.
+}
+
+- (void)viewDidUnload {
+    [super viewDidUnload];
+    // Release any retained subviews of the main view.
+    // e.g. self.myOutlet = nil;
+}
+
+#pragma mark -
+#pragma mark handle click button events
+-(IBAction)click_close_button:(UIBarButtonItem*)button{
+	//use self is also ok
+	[((NextTrainAppDelegate*)[UIApplication sharedApplication].delegate).navigation_controller dismissModalViewControllerAnimated:YES];
+}
+
+#pragma mark -
+#pragma mark common functions
+-(void)web_view_timeout{
+	if(_web_view_timer != nil){
+		[self stopWebViewTimeoutTimer];
+	}
+	if(_web_view != nil){
+		[_web_view stopLoading];
+		_web_view.delegate = nil;
+	}
+//    _connection_failed_view_controller.delegate = self;
+//    [_connection_failed_view_controller showView];
+    if (customAlertView != nil)
+    {
+        [customAlertView clearDelegatesAndCancel];
+        [customAlertView release];
+        customAlertView = nil;
+    }
+    
+    customAlertView = [[CustomAlertView alloc] initWithMessage:NSLocalizedString(([NSString stringWithFormat:@"no_connection_content_%@", [CoreData sharedCoreData].lang]), nil)];
+    customAlertView.delegate = self;
+    [customAlertView show];   
+}
+
+
+
+-(void)startWebViewTimeoutTimer
+{
+    if (_web_view_timer != nil)
+    {
+        [self stopWebViewTimeoutTimer];
+    }
+    
+    _web_view_timer = [[NSTimer scheduledTimerWithTimeInterval:time_interval target:self selector:@selector(web_view_timeout) userInfo:nil repeats:NO] retain];
+}
+
+-(void)stopWebViewTimeoutTimer
+{
+    if(_web_view_timer != nil){
+        if ([_web_view_timer isValid])
+            [_web_view_timer invalidate];
+        [_web_view_timer release];
+		_web_view_timer = nil;
+	}
+}
+
+
+#pragma mark -
+#pragma mark UIWebView delegate
+-(void)webViewDidStartLoad:(UIWebView *)webView{
+	
+}
+
+-(void)webViewDidFinishLoad:(UIWebView *)webView{
+	if(_web_view_timer != nil){
+        [self stopWebViewTimeoutTimer];
+	}
+	_banner_detail_mask_view.hidden = YES;
+}
+
+-(void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error{
+	if(error != nil && ([error code] == NSURLErrorNotConnectedToInternet || [error code] == NSURLErrorCannotFindHost || [error code] == NSURLErrorCannotConnectToHost)){
+		if(_web_view_timer != nil){
+            [self stopWebViewTimeoutTimer];
+		}
+		if(_web_view != nil){
+			[_web_view stopLoading];
+			_web_view.delegate = nil;
+		}
+//        _connection_failed_view_controller.delegate = self;
+//        [_connection_failed_view_controller showView];
+        if (customAlertView != nil)
+        {
+            [customAlertView clearDelegatesAndCancel];
+            [customAlertView release];
+            customAlertView = nil;
+        }
+        
+        customAlertView = [[CustomAlertView alloc] initWithMessage:NSLocalizedString(([NSString stringWithFormat:@"no_connection_content_%@", [CoreData sharedCoreData].lang]), nil)];
+        customAlertView.delegate = self;
+        [customAlertView show];
+	}
+}
+
+//#pragma mark - ConnectionFailedViewDelegate
+//
+//-(void)clickedConnectionFailedCloseButton:(ConnectionFailedViewController *)connection_failed_view_controller{
+//	[self dismissModalViewControllerAnimated:YES];
+//	_banner_detail_mask_view.hidden = YES;
+//    _connection_failed_view_controller.delegate = nil;
+//}
+
+#pragma mark - CustomAlertViewDelegate
+
+-(void)CustomAlertView:(CustomAlertView *)currentCustomAlertView didDismissWithButtonIndex:(int)buttonIndex
+{
+	[self dismissModalViewControllerAnimated:YES];
+	_banner_detail_mask_view.hidden = YES;
+}
+
+@end

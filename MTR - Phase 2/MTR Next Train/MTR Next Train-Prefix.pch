@@ -1,0 +1,89 @@
+//
+// Prefix header for all source files of the 'MTR Next Train' target in the 'MTR Next Train' project
+//
+
+#import <Availability.h>
+
+#ifndef __IPHONE_3_0
+#warning "This project uses features only available in iOS SDK 3.0 and later."
+#endif
+
+#ifdef __OBJC__
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+
+CGRect screenRect;
+BOOL isFive;
+
+#endif
+
+#define ReleaseObj(obj) if(obj!=nil){[obj release];obj=nil;}
+
+#define IS_IPHONE5 ([[UIScreen mainScreen] bounds].size.height > 480.0f)
+#define IsIOS7 (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1
+
+//------------------------------------------------------------------//
+
+#define mtrAppVersion @"3_0"
+
+//********SIT***********
+
+//// CHECK UPDATE
+//#define updateAPI @"http://203.90.7.238/NT_v2/NTAppModule/nexttrain_version_check_all_devices.xml"
+//
+//// AD BANNER
+//#define adlistAPI @"http://mtr.mtel.ws/java/MTRNextTrain/adlist.api?"
+//
+//// T&C
+//#define TandCAPI @"http://mtr.mtel.ws/files/MTRNextTrain/xml"
+//
+//// GET SCHEDULE
+//#define getScheduleAPI @"http://203.90.7.238/NT_v2/NTAppModule/getSchedule.php?"
+//
+////System map
+//
+//#define getSystemMapAPI @"http://203.90.7.238/NT_v2/NTAppModule/CheckSystemMapVer.php?"
+//
+//// REGISTER PUSH NOTIFICATION
+//#define pushNotificationAPI @"http://testsvr1.mtel.ws/java/MTRNextTrain/regnotification.api?"
+//
+//// SECRET KEY
+//#define secretKey @"c90vfw4a"
+
+//------------------------------------------------------------------//
+
+//********PRD***********
+
+// CHECK UPDATE
+#define updateAPI @"http://ntapp.mtr.com.hk/NT_v2/NTAppModule/nexttrain_version_check_all_devices.xml"
+
+// AD BANNER
+#define adlistAPI @"http://mtr.mtel.ws/java/MTRNextTrain/adlist.api?"
+
+// T&C
+#define TandCAPI @"http://mtr.mtel.ws/files/MTRNextTrain/xml"
+
+// GET SCHEDULE
+#define getScheduleAPI @"http://ntapp.mtr.com.hk/NT_v2/NTAppModule/getSchedule.php?"
+
+//System map
+
+#define getSystemMapAPI @"http://ntapp.mtr.com.hk/NT_v2/NTAppModule/CheckSystemMapVer.php?"
+
+// REGISTER PUSH NOTIFICATION
+#define pushNotificationAPI @"http://testsvr1.mtel.ws/java/MTRNextTrain/regnotification.api?"
+
+// SECRET KEY
+#define secretKey @"c90vfabc"
+
+#define statusBarChangedNotification @"statusBarChangedNotification"
+
+#ifdef DEBUG
+#define DEBUGS [NSString stringWithFormat:@"%sm:%d ",__PRETTY_FUNCTION__,__LINE__]
+#define DEBUGLog NSLog(@"%@",DEBUGS);
+#define DEBUGMSG(msg,...) NSLog(@"%@%@",DEBUGS,[NSString stringWithFormat:msg, ## __VA_ARGS__]);
+#else
+#define DEBUGS @""
+#define DEBUGLog
+#define DEBUGMSG(msg,...)
+#endif

@@ -1,0 +1,255 @@
+/*
+ Localizable.strings
+ MTR Next Train
+ 
+ Created by  on 12年2月8日.
+ Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+ */
+
+// Common ---------------------
+
+"select_StationAlert_en" = "Please select station";
+"select_StationAlert_zh_TW" = "請選擇車站";
+
+"slideMenu_Tittle_en" = "Settings";
+"slideMenu_Tittle_zh_TW" = "設定";
+
+"slideTittle_Language_en" = "Language / 語言";
+"slideTittle_Language_zh_TW" = "語言 / Language";
+
+"slideTittle_Update_en" = "Set Update Mode";
+"slideTittle_Update_zh_TW" = "更新模式";
+
+"slideTittle_Terms_en" = "Terms of Use";
+"slideTittle_Terms_zh_TW" = "使用條款 ";
+
+"slideTittle_Tutorial_en" = "In-app Tutorial";
+"slideTittle_Tutorial_zh_TW" = "教學";
+
+"slideTittle_CheckUpdate_en" = "App Update";
+"slideTittle_CheckUpdate_zh_TW" = "程式更新";
+
+"bookmark_Favoutite_en" = "Bookmarked";
+"bookmark_Favoutite_zh_TW" = "我的書籤";
+
+"cancel_bookmark_Favoutite_en" = "Cancel Bookmarked";
+"cancel_bookmark_Favoutite_zh_TW" = "取消我的書籤";
+
+
+"cancel_bookmark_Favoutite_en" = "Cancel Bookmarked";
+"cancel_bookmark_Favoutite_zh_TW" = "取消我的書籤";
+
+"already_added_bookmark_en" = "Station has been Bookmarked";
+"already_added_bookmark_zh_TW" = " 已加入我的書籤";
+
+"cancel_en" = "Cancel";
+"cancel_zh_TW" = "取消";
+
+"ok_en" = "OK";
+"ok_zh_TW" = "確定";
+
+
+"close_en" = "Close";
+"close_zh_TW" = "關閉";
+
+"cancel_and_quit_en" = "Cancel & Quit";
+"cancel_and_quit_zh_TW" = "取消及退出程式";
+
+
+
+"next_en" = "Next";
+"next_zh_TW" = "下一步";
+
+"app_update_title_en" = "Please update the app now";
+"app_update_title_zh_TW" = "請即更新應用程式";
+
+"app_update_content_en" = "Your App version is outdated, please update the app now.";
+"app_update_content_zh_TW" = "您正使用的應用程式版本已經太舊, 請立即更新。";
+
+"app_can_update_content_en" = "A new version is available, please update now.";
+"app_can_update_content_zh_TW" = "新版本已預備好，請立即更新。";
+
+"app_update_quit_app_en" = "Quit App";
+"app_update_quit_app_zh_TW" = "退出程式";
+
+"app_update_update_now_en" = "Update Now";
+"app_update_update_now_zh_TW" = "立即更新";
+
+"no_connection_content_for_service_update_en" = "Cannot connect to the server. Please try again later.";
+"no_connection_content_for_service_update_zh_TW" = "無法連接到伺服器，請稍後再次嘗試。";
+
+"no_information_for_service_update_en" = "Service is normal. No major delay in the network.";
+"no_information_for_service_update_zh_TW" = "服務正常，網絡並無重大延遲。";
+
+"please_enable_location_base_services_en" = "Please enable location base services.";
+"please_enable_location_base_services_zh_TW" = "請開啓定位功能。";
+
+"map_search_en" = "Map Search";
+"map_search_zh_TW" = "路綫圖搜索";
+
+"select_en" = "Select";
+"select_zh_TW" = "選擇";
+
+"loading_en" = "Loading ...";
+"loading_zh_TW" = "載入中 ...";
+
+"launch_not_authorized_en" = "Sorry, your software is not authorized to launch this application.";
+"launch_not_authorized_zh_TW" = "對不起，您的軟件沒有被授權來啟動這個應用程式。";
+
+//Contact Us Section
+
+"contact_us_en" = "Contact info";
+"contact_us_zh_TW" = "聯絡資料";
+
+"contact_us_tel_en" = "Tel: ";
+"contact_us_tel_zh_TW" = "電話: ";
+
+"contact_us_line_en" = "Line: ";
+"contact_us_line_zh_TW" = "港鐵路綫: ";
+
+"contact_us_station_en" = "Station: ";
+"contact_us_station_zh_TW" = "港鐵站: ";
+
+//More Section
+
+"more_en" = "More";
+"more_zh_TW" = "更多";
+
+
+"more_select_language_en" = "Select Language: ";
+"more_select_language_zh_TW" = "選擇語言: ";
+
+"more_version_en" = "Version: Next Train ";
+"more_version_zh_TW" = "程式版本: Next Train ";
+
+"more_update_en" = "Update";
+"more_update_zh_TW" = "更新";
+
+"more_station_facilities_en" = "Station Facilities";
+"more_station_facilities_zh_TW" = "車站設施";
+
+"more_contact_us_en" = "Contact Us";
+"more_contact_us_zh_TW" = "聯絡我們";
+
+"more_check_update_en" = "Check Update";
+"more_check_update_zh_TW" = "檢查可用之更新";
+
+"more_last_update_on_en" = "Last Update on ";
+"more_last_update_on_zh_TW" = "上次更新時間: ";
+
+
+"more_last_checking_time_en" = "Last checking time:";
+"more_last_checking_time_zh_TW" = "上次檢查時間: ";
+
+
+
+//"set_update_frequency_en" = "Set Update Mode (Auto / Manual)";
+//"set_update_frequency_zh_TW" = "更新模式 (自動 / 手動)";
+
+
+"set_update_frequency_en" = "Set Update Mode";
+"set_update_frequency_zh_TW" = "更新模式";
+
+"15_sec_en" = "15 Sec";
+"15_sec_zh_TW" = "15 秒";
+
+"20_sec_en" = "20 Sec";
+"20_sec_zh_TW" = "20 秒";
+
+"30_sec_en" = "30 Sec";
+"30_sec_zh_TW" = "30 秒";
+
+"update_manually_en" = "Update Manually";
+"update_manually_zh_TW" = "手動模式";
+
+"in_app_tutorial_en" = "In-app Tutorial";
+"in_app_tutorial_zh_TW" = "教學";
+
+//Next Train Section
+
+"next_train_en" = "Next Train";
+"next_train_zh_TW" = "下一班車";
+
+"select_station_en" = "Select departing station";
+"select_station_zh_TW" = "選擇出發車站";
+
+"arrived_en" = "Arrived";
+"arrived_zh_TW" = "已抵達";
+
+"arriving_en" = "Arriving";
+"arriving_zh_TW" = "即將抵達";
+
+"depart_soon_en" = "Departs Soon";
+"depart_soon_zh_TW" = "即將開出";
+
+"departing_en" = "Departing";
+"departing_zh_TW" = "正在離開";
+
+//"schedule_en" = "Schedule";
+//"schedule_zh_TW" = "時間表";
+
+"schedule_en" = "Real-time schedule";
+"schedule_zh_TW" = "即時行車資訊";
+
+"route_map_en" = "Route Map";
+"route_map_zh_TW" = "行車綫";
+
+"to_en" = "To ";
+"to_zh_TW" = "往";
+
+"select_line_en" = "Select Line";
+"select_line_zh_TW" = "選擇港鐵路綫";
+
+"train_service_ended_en" = "Train service for today has ended.\nThanks for taking MTR.";
+"train_service_ended_zh_TW" = "是日的列車服務已經完結，\n感謝乘搭港鐵。";
+
+"no_information_available_en" = "Sorry that there is no information available at this moment.";
+"no_information_available_zh_TW" = "很抱歉，暫時沒有資料可以提供。";
+
+"no_server_available_en" = "Server response problem, please retry later.";
+"no_server_available_zh_TW" = "服務器有問題，請稍後再試";
+
+"no_connection_content_en" = "No internet connection can be found. Please enable the 3G/Wifi.";
+"no_connection_content_zh_TW" = "未能連接網絡，請先開啓 3G / Wifi。";
+
+
+"please_take_tung_chung_line_en" = "Please take Tung Chung Line\ninstead of Airport Express.";
+"please_take_tung_chung_line_zh_TW" = "機場快綫不適用於以上路綫，\n請乘坐東涌綫。";
+
+"destination_en" = "Destination";
+"destination_zh_TW" = "目的地";
+
+"platform_en" = "Platform";
+"platform_zh_TW" = "月台";
+
+"estimated_arrival_time_en" = "Estimated Arrival";
+"estimated_arrival_time_zh_TW" = "預計到達時間";
+
+"estimated_departure_time_en" = "Estimated Departure";
+"estimated_departure_time_zh_TW" = "預計開出時間";
+
+"last_update_en" = "Last Update";
+"last_update_zh_TW" = "最後更新";
+
+"red_alert_message_en" = "Red Alert Message";
+"red_alert_message_zh_TW" = "紅色警報消息";
+
+"non_stop_AIR_en" = "(non-stop:AIR)";
+"non_stop_AIR_zh_TW" = "(不停機場)";
+
+//Favorite Section
+
+"my_favorite_en" = "My Bookmark";
+"my_favorite_zh_TW" = "我的書籤";
+
+"remove_en" = "Delete";
+"remove_zh_TW" = "移除";
+
+"edit_en" = "Edit";
+"edit_zh_TW" = "編輯";
+
+"done_en" = "Done";
+"done_zh_TW" = "完成";
+
+"no_bookmark_en" = "To bookmark your favourite station(s), press the \"star\" icon at the top right corner of the real-time \ntrain schedule page .";
+"no_bookmark_zh_TW" = "若要把常用的車站加到書籤中，請輕按實時行車資訊版右上方的星鍵。";

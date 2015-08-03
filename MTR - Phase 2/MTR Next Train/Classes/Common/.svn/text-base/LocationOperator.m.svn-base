@@ -1,0 +1,302 @@
+//
+//  LocationOperator.m
+//  MTR Next Train
+//
+//  Created by  on 12年2月10日.
+//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//
+
+#import "LocationOperator.h"
+
+@implementation LocationOperator
+
+@synthesize current_location;
+@synthesize delegate;
+@synthesize stopOnceFoundLocaton;
+@synthesize timeout;
+
+static LocationOperator *sharedOperator = nil;
+
++(LocationOperator *)sharedOperator {
+    
+    if (sharedOperator == nil)
+    {
+        sharedOperator = [[LocationOperator alloc] init];
+    }
+    
+    return sharedOperator;
+}
+
+#pragma mark - Operating functions
+
+-(void)startUpdatingLocation
+{
+    if ([LocationOperator isLocationServicesEnabled] == YES)
+    {        
+        if (location_manager==nil) {
+            NSLog(@"Create location manager");
+			location_manager = [[CLLocationManager alloc] init];
+            location_manager.desiredAccuracy = kCLLocationAccuracyHundredMeters;
+			location_manager.delegate = self;
+		}
+        
+        NSLog(@"Start updating location...");
+
+        if (timeout > 0)
+        {
+            if (timer != nil)
+            {
+                if ([timer isValid])
+                    [timer invalidate];
+                [timer release];
+                timer = nil;
+            }
+            
+            timer = [[NSTimer scheduledTimerWithTimeInterval:timeout target:self selector:@selector(locationManagerDidTimeout) userInfo:nil repeats:NO] retain];
+        }
+        
+        [location_manager startUpdatingLocation];
+    }
+    else
+    {
+        if (delegate && [delegate respondsToSelector:@selector(locationOperatorDidFailWithError:)]) {
+            [delegate performSelector:@selector(locationOperatorDidFailWithError:) withObject:nil];
+        }
+    }
+}
+
+-(void)stopUpdatingLocation
+{
+    if (location_manager != nil)
+    {
+        [location_manager stopUpdatingLocation];
+    }
+}
+
+-(void)close
+{
+    if (location_manager != nil)
+    {
+        [location_manager stopUpdatingLocation];
+        [location_manager release];
+        location_manager = nil;
+    }
+}
+
+#pragma mark -
+#pragma mark CLLocationManagerDelegate
+-(void) locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation {
+    
+    NSLog(@"didUpdateToLocation %f,%f",newLocation.coordinate.latitude,newLocation.coordinate.longitude);
+
+    NSDate* eventDate = newLocation.timestamp;
+    NSTimeInterval howRecent = [eventDate timeIntervalSinceNow];
+    
+    // event occured within last 15 sec
+    if (abs(howRecent) < 15.0)
+    {        
+        // location accurate within 100 m
+        //if ([newLocation horizontalAccuracy] > 0.0 && [newLocation horizontalAccuracy] <= 100.0)
+        if ([newLocation horizontalAccuracy] > 0.0)
+        {
+            // stop location manager
+            if (stopOnceFoundLocaton == YES)
+            {
+                [self stopUpdatingLocation];
+            }
+            
+            // stop timer
+            if (timer != nil)
+            {
+                if ([timer isValid])
+                    [timer invalidate];
+                [timer release];
+                timer = nil;
+            }
+            
+            current_location = newLocation;
+            
+            if (delegate && [delegate respondsToSelector:@selector(locationOperatorDidUpdateToLocation:fromLocation:)]) {
+                [delegate performSelector:@selector(locationOperatorDidUpdateToLocation:fromLocation:) withObject:newLocation withObject:oldLocation];
+            }
+        }
+    }
+}
+
+-(void) locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
+    
+    NSLog(@"didFailWithError");
+    
+    if (delegate && [delegate respondsToSelector:@selector(locationOperatorDidFailWithError:)]) {
+        [delegate performSelector:@selector(locationOperatorDidFailWithError:) withObject:error];
+    }
+    
+    // stop location manager
+	[self stopUpdatingLocation];
+    
+    // stop timer
+    if (timer != nil)
+    {
+        if ([timer isValid])
+            [timer invalidate];
+        [timer release];
+        timer = nil;
+    }
+}
+
+-(void)locationManagerDidTimeout
+{    
+    NSLog(@"didTimeout");
+    
+    if (delegate && [delegate respondsToSelector:@selector(locationOperatorDidFailWithError:)]) {
+        [delegate performSelector:@selector(locationOperatorDidFailWithError:) withObject:nil];
+    }
+    
+    // stop location manager
+	[self stopUpdatingLocation];
+    
+    // stop timer
+    if (timer != nil)
+    {
+        if ([timer isValid])
+            [timer invalidate];
+        [timer release];
+        timer = nil;
+    }
+}
+
+#pragma mark - Main functions
+
+
+-(float)distanceOfCurrentLocationFromLatitude:(NSString*)latitude longitude:(NSString*)longitude
+{
+    if (current_location == nil)
+        return -1.0;
+    
+    float lat1f = [latitude floatValue];
+    float long1f = [longitude floatValue];
+    
+    // Apple Location
+    CLLocation *loc1 = [[CLLocation alloc] initWithLatitude:lat1f longitude:long1f];
+    
+    float d = [current_location distanceFromLocation:loc1] / 1000;
+    
+    [loc1 release];
+    
+    NSLog(@"Distance using Apple Location = %f", d);
+    
+    return d;
+}
+
+#pragma mark - Misc functions
+
++(BOOL)isLocationServicesEnabled 
+{
+    BOOL enabled = NO;
+    
+	if ([CoreData sharedCoreData].os < 4.0){
+		CLLocationManager *local_location_manager = [[CLLocationManager alloc] init];
+		enabled = [local_location_manager locationServicesEnabled];
+		[local_location_manager release];
+	}  
+	else if([CoreData sharedCoreData].os < 4.2){
+		enabled = [CLLocationManager locationServicesEnabled];
+	}
+	else {
+		enabled = ([CLLocationManager locationServicesEnabled]&&[CLLocationManager authorizationStatus]!= kCLAuthorizationStatusDenied);
+	}
+    
+    return enabled;
+}
+
++(float)distanceBetweenLat1:(NSString*)lat1 long1:(NSString*)long1 lat2:(NSString*)lat2 long2:(NSString*)long2
+{
+    // test 3 methods of calculating distance
+    
+    if (lat1 == nil || long1 == nil || lat2 == nil || long2 == nil)
+        return -1.0;
+    
+    // Both latitude and longitude are in decimal degrees
+    float lat1f = [lat1 floatValue];
+    float long1f = [long1 floatValue];
+    float lat2f = [lat2 floatValue];
+    float long2f = [long2 floatValue];
+    
+    /*
+    float ct = M_PI / 180;
+    float radius = 6371; // 3959 mile / 6371 km
+     */
+    /*
+    // Law of Cosines
+    float a = sinf(lat1f*ct) * sinf(lat2f*ct);
+    float b = cosf(lat1f*ct) * cosf(lat2f*ct) * cosf((long2f-long1f)*ct);
+    float c = acosf(a + b);
+    float d = radius * c;
+    
+    NSLog(@"Distance using Law of Cosines = %f", d);
+    */
+    /*
+    // Haversine
+    float a2 = powf( sinf(((lat2f - lat1f) * ct) / 2), 2) + cosf(lat1f*ct) * cosf(lat2f*ct) * powf( sinf( ((long2f - long1f)*ct)/2), 2);
+    float c2 = 2 * asinf( MIN(1, sqrtf(a2)) );
+    float d2 = radius * c2;
+    
+    NSLog(@"Distance using Haversine formula = %f", d2);
+    */
+    
+    // Apple Location
+    CLLocation *loc1 = [[CLLocation alloc] initWithLatitude:lat1f longitude:long1f];
+    CLLocation *loc2 = [[CLLocation alloc] initWithLatitude:lat2f longitude:long2f];
+    
+    float d3 = [loc1 distanceFromLocation:loc2] / 1000;
+    
+    [loc1 release];
+    [loc2 release];
+    
+    NSLog(@"Distance using Apple Location = %f", d3);
+    
+    return d3;
+}
+
++(CLLocation*)locationForLatitude:(NSString*)latitude longitude:(NSString*)longitude
+{
+    if (latitude == nil || longitude == nil)
+    {
+        return nil;
+    }
+    
+    float lat1f = [latitude floatValue];
+    float long1f = [longitude floatValue];
+    
+    CLLocation *loc1 = [[[CLLocation alloc] initWithLatitude:lat1f longitude:long1f] autorelease];
+    
+    return loc1;
+}
+
++(int)getClosestLocationByComparingLocation:(CLLocation*)location withLocationArray:(NSArray*)locationArray
+{
+    if (location == nil || [locationArray count] == 0)
+    {
+        return -1;
+    }
+    
+    CLLocationDistance shortestDistance = -1;
+    int closestLocationIndex = -1;
+    
+    for (int l=0; l<[locationArray count]; l++)
+    {
+        CLLocation *location2 = [locationArray objectAtIndex:l];
+        
+        CLLocationDistance distance = [location distanceFromLocation:location2];
+        
+        if (shortestDistance == -1 || distance < shortestDistance)
+        {
+            shortestDistance = distance;
+            closestLocationIndex = l;
+        }
+    }
+    
+    return closestLocationIndex;
+}
+
+@end

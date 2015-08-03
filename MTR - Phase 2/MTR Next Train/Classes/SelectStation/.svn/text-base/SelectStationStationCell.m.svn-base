@@ -1,0 +1,62 @@
+//
+//  StationFacilitieStationCell.m
+//  bochk
+//
+//  Created by Jeff Cheung on 11年3月2日.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#import "SelectStationStationCell.h"
+
+
+@implementation SelectStationStationCell
+
+@synthesize dot_image_view = _dot_image_view;
+@synthesize value_label = _value_label;
+
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
+    if ((self = [super initWithStyle:style reuseIdentifier:reuseIdentifier])) {
+        // Initialization code
+		self.selectionStyle = UITableViewCellSelectionStyleNone;
+        
+        _dot_image_view = [[UIImageView alloc] initWithFrame:CGRectMake(6, 16, 16, 16)];
+        _dot_image_view.backgroundColor = [UIColor clearColor];
+        [self.contentView addSubview:_dot_image_view];
+        
+		_value_label = [[UILabel alloc] initWithFrame:CGRectMake(30, 0, 142, 48)];
+        //_value_label.font = [UIFont boldSystemFontOfSize:13];
+        if ([[CoreData sharedCoreData].lang isEqualToString:@"en"])
+        {
+            _value_label.font = [UIFont boldSystemFontOfSize:13];
+        }
+        else
+        {
+            _value_label.font = [UIFont boldSystemFontOfSize:18];
+        }
+		_value_label.backgroundColor = [UIColor clearColor];
+		_value_label.textAlignment = UITextAlignmentLeft;
+		[self.contentView addSubview:_value_label];
+    }
+    return self;
+}
+
+-(void)reset{
+    _value_label.text = @"";
+    _dot_image_view.image = nil;
+}
+
+- (void)dealloc {
+    if(_dot_image_view != nil){
+        [_dot_image_view removeFromSuperview];
+        [_dot_image_view release];
+        _dot_image_view = nil;
+    }
+    if(_value_label != nil){
+        [_value_label removeFromSuperview];
+        [_value_label release];
+        _value_label = nil;
+    }
+    [super dealloc];
+}
+
+@end
